@@ -400,6 +400,7 @@ const postPath = "/mcp/messages";
 const subscribePath = "/api/subscribe";
 const analyticsPath = "/analytics";
 const trackEventPath = "/api/track";
+const healthPath = "/health";
 
 const ANALYTICS_PASSWORD = process.env.ANALYTICS_PASSWORD || "changeme123";
 
@@ -1194,6 +1195,11 @@ const httpServer = createServer(
         "Access-Control-Allow-Headers": "content-type",
       });
       res.end();
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === healthPath) {
+      res.writeHead(200, { "Content-Type": "text/plain" }).end("OK");
       return;
     }
 
