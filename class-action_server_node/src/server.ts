@@ -1228,6 +1228,23 @@ const httpServer = createServer(
       return;
     }
 
+    // Serve static assets from /assets directory
+    if (req.method === "GET" && url.pathname.startsWith("/assets/")) {
+      const assetPath = path.join(ASSETS_DIR, url.pathname.slice(8));
+      if (fs.existsSync(assetPath) && fs.statSync(assetPath).isFile()) {
+        const ext = path.extname(assetPath);
+        const contentType = ext === ".js" ? "application/javascript" : 
+                           ext === ".css" ? "text/css" : 
+                           ext === ".html" ? "text/html" : "application/octet-stream";
+        res.writeHead(200, { 
+          "Content-Type": contentType,
+          "Access-Control-Allow-Origin": "*"
+        });
+        fs.createReadStream(assetPath).pipe(res);
+        return;
+      }
+    }
+
     res.writeHead(404).end("Not Found");
   }
 );
