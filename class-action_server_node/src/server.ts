@@ -45,6 +45,12 @@ const ROOT_DIR = process.env.ASSETS_ROOT || path.resolve(__dirname, "..", "..");
 const ASSETS_DIR = path.resolve(ROOT_DIR, "assets");
 const LOGS_DIR = path.resolve(__dirname, "..", "logs");
 
+console.log(`Assets directory: ${ASSETS_DIR}`);
+console.log(`Assets directory exists: ${fs.existsSync(ASSETS_DIR)}`);
+if (fs.existsSync(ASSETS_DIR)) {
+  console.log(`Assets contents: ${fs.readdirSync(ASSETS_DIR).join(', ')}`);
+}
+
 if (!fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true });
 }
