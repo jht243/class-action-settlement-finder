@@ -7,7 +7,7 @@ import { Star, ExternalLink, Calendar, DollarSign, Share2, ChevronLeft, ChevronR
 import { AnimatePresence, motion } from "framer-motion";
 import settlementsData from "./settlements.json";
 
-const TRACK_URL = 'https://18aebadb5d86.ngrok-free.app/api/track';
+const TRACK_URL = 'https://class-action-settlement-finder.onrender.com/api/track';
 const TURNSTILE_SITE_KEY = '0x4AAAAAAB88oeIlUFfNX1o7';
 
 // Load Turnstile script
@@ -194,7 +194,7 @@ function SettlementCard({ settlement, sharedTurnstileToken }) {
     console.log('Subscribing to settlement:', settlement.name, 'with email:', email);
 
     try {
-      const response = await fetch('https://18aebadb5d86.ngrok-free.app/api/subscribe', {
+      const response = await fetch('https://class-action-settlement-finder.onrender.com/api/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -456,7 +456,7 @@ export default function ClassActionFinder() {
     setGlobalError('');
 
     try {
-      const response = await fetch('https://18aebadb5d86.ngrok-free.app/api/subscribe', {
+      const response = await fetch('https://class-action-settlement-finder.onrender.com/api/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
