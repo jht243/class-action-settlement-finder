@@ -410,6 +410,14 @@ export default function ClassActionFinder() {
   const [selectedCategory, setSelectedCategory] = React.useState(widgetProps?.category || "All");
   const [ageRangeIndex, setAgeRangeIndex] = React.useState(0);
   const [userLocation, setUserLocation] = React.useState(widgetProps?.state || "US");
+  React.useEffect(() => {
+    const categoryFromProps = widgetProps?.category;
+    if (categoryFromProps) {
+      setSelectedCategory(categoryFromProps);
+    } else if (categoryFromProps === undefined || categoryFromProps === null) {
+      setSelectedCategory("All");
+    }
+  }, [widgetProps?.category]);
   const [sortBy, setSortBy] = React.useState("deadline");
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [feedbackText, setFeedbackText] = React.useState('');
