@@ -1,3 +1,4 @@
 packages:
   - pizzaz_server_node
   - class-action_server_node
+  - mortgage-calculator_server_node
