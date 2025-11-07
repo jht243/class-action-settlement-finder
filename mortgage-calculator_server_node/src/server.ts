@@ -51,6 +51,41 @@ if (fs.existsSync(ASSETS_DIR)) {
   console.log(`Assets contents: ${fs.readdirSync(ASSETS_DIR).join(', ')}`);
 }
 
+// Average mortgage rate (proxy to public API)
+async function handleAvgRate(_req: IncomingMessage, res: ServerResponse) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Content-Type", "application/json");
+
+  const FRED_API_KEY = process.env.FRED_API_KEY;
+  try {
+    if (!FRED_API_KEY) {
+      res.writeHead(200).end(JSON.stringify({ rate: null, series: "MORTGAGE30US", date: null }));
+      return;
+    }
+
+    const url = new URL("https://api.stlouisfed.org/fred/series/observations");
+    url.searchParams.set("series_id", "MORTGAGE30US");
+    url.searchParams.set("api_key", FRED_API_KEY);
+    url.searchParams.set("file_type", "json");
+    url.searchParams.set("sort_order", "desc");
+    url.searchParams.set("limit", "1");
+
+    const resp = await fetch(url.toString());
+    if (!resp.ok) {
+      throw new Error(`FRED error: ${resp.status}`);
+    }
+    const data = await resp.json();
+    const obs = (data && data.observations && data.observations[0]) || null;
+    const value = obs ? parseFloat(obs.value) : null;
+    const date = obs ? obs.date : null;
+
+    res.writeHead(200).end(JSON.stringify({ rate: Number.isFinite(value) ? value : null, series: "MORTGAGE30US", date }));
+  } catch (err: any) {
+    console.error("avg-rate fetch error:", err);
+    res.writeHead(200).end(JSON.stringify({ rate: null, series: "MORTGAGE30US", date: null }));
+  }
+}
+
 if (!fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true });
 }
@@ -399,6 +434,7 @@ const sessions = new Map<string, SessionRecord>();
 const ssePath = "/mcp";
 const postPath = "/mcp/messages";
 const subscribePath = "/api/subscribe";
+const avgRatePath = "/api/avg-rate";
 const analyticsPath = "/analytics";
 const trackEventPath = "/api/track";
 const healthPath = "/health";
@@ -1211,6 +1247,11 @@ const httpServer = createServer(
 
     if (req.method === "POST" && url.pathname === postPath) {
       await handlePostMessage(req, res, url);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === avgRatePath) {
+      await handleAvgRate(req, res);
       return;
     }
 
