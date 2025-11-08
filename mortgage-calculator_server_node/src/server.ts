@@ -1159,7 +1159,13 @@ async function handleSubscribe(req: IncomingMessage, res: ServerResponse) {
       return;
     }
 
-    // For global notifications, deadline can be null
+    // Check API key presence before attempting subscription
+    const BUTTONDOWN_API_KEY_PRESENT = !!process.env.BUTTONDOWN_API_KEY;
+    if (!BUTTONDOWN_API_KEY_PRESENT) {
+      res.writeHead(500).end(JSON.stringify({ error: "Server misconfigured: BUTTONDOWN_API_KEY missing" }));
+      return;
+    }
+
     try {
       await subscribeToButtondown(email, settlementId, settlementName, deadline || null);
       res.writeHead(200).end(JSON.stringify({ 
@@ -1167,9 +1173,12 @@ async function handleSubscribe(req: IncomingMessage, res: ServerResponse) {
         message: "Successfully subscribed! You'll receive a reminder before the deadline." 
       }));
     } catch (subscribeError: any) {
-      // If subscriber already exists, try updating their metadata instead
-      if (subscribeError.message && subscribeError.message.includes('already subscribed')) {
-        console.log("Subscriber exists, updating metadata...");
+      const rawMessage = String(subscribeError?.message ?? "").trim();
+      const msg = rawMessage.toLowerCase();
+      const already = msg.includes('already subscribed') || msg.includes('already exists') || msg.includes('already on your list') || msg.includes('subscriber already exists') || msg.includes('already');
+
+      if (already) {
+        console.log("Subscriber already on list, attempting update", { email, settlementId, message: rawMessage });
         try {
           await updateButtondownSubscriber(email, settlementId, settlementName, deadline || null);
           res.writeHead(200).end(JSON.stringify({ 
@@ -1177,12 +1186,20 @@ async function handleSubscribe(req: IncomingMessage, res: ServerResponse) {
             message: "Settlement added to your subscriptions!" 
           }));
         } catch (updateError: any) {
-          console.error("Update subscriber error:", updateError);
-          throw updateError;
+          console.warn("Update subscriber failed, returning graceful success", {
+            email,
+            settlementId,
+            error: updateError?.message,
+          });
+          res.writeHead(200).end(JSON.stringify({
+            success: true,
+            message: "You're already subscribed! We'll keep you posted.",
+          }));
         }
-      } else {
-        throw subscribeError;
+        return;
       }
+
+      throw subscribeError;
     }
   } catch (error: any) {
     console.error("Subscribe error:", error);
