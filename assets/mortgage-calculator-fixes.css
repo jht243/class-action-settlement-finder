@@ -1,0 +1,13 @@
+/* Mortgage calculator spacing fixes: do not change structure or widths */
+/* Tighten spacing between header/subheader and first section */
+.slide-content { display: grid; gap: 16px; }
+.slide-content.tight { gap: 16px; }
+.slide-content.breakdown { gap: 12px; }
+.slide-header h2 { margin: 0; }
+.slide-header p { margin: 0; }
+/* Ensure section-block has no unexpected top margin and compact internal spacing */
+.section-block { margin: 0; padding: 16px; display: grid; gap: 12px; }
+/* Chart container should not introduce extra top spacing */
+#breakdownChart, canvas#breakdownChart { margin-top: 0 !important; }
+/* Guard against accidental large top margins in the first section after header */
+.carousel-slide[data-card="breakdown"] .slide-content > .section-block:first-of-type { margin-top: 0 !important; }
