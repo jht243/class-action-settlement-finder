@@ -3,50 +3,8 @@
 <head>
   <script type="module" src="https://mortgage-calculator-open-ai.onrender.com/assets/mortgage-calculator-2d2b.js"></script>
   <link rel="stylesheet" href="https://mortgage-calculator-open-ai.onrender.com/assets/mortgage-calculator-2d2b.css">
-  <style>
-    .carousel-slide[data-card="breakdown"] .slide-header h2,
-    .carousel-slide[data-card="breakdown"] .slide-header p {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-
-    .carousel-slide[data-card="breakdown"] .slide-content {
-      gap: 12px;
-    }
-
-    .carousel-slide[data-card="breakdown"] .slide-content > .section-block:first-of-type,
-    .carousel-slide[data-card="breakdown"] .slide-content > .breakdown-card:first-of-type {
-      margin-top: 0 !important;
-    }
-
-    .carousel-slide[data-card="breakdown"] #breakdownChart,
-    .carousel-slide[data-card="breakdown"] canvas#breakdownChart {
-      margin-top: 0 !important;
-    }
-  </style>
 </head>
 <body>
   <div id="mortgage-calculator-root"></div>
-  <script>
-    (function () {
-      function applyRate(val) {
-        var el = document.querySelector('.rate-badge .rate-num');
-        if (el) { el.textContent = String(val) + '%'; }
-        else { setTimeout(function(){ applyRate(val); }, 150); }
-      }
-      async function refreshRate() {
-        try {
-          var resp = await fetch('/api/rate', { cache: 'no-store' });
-          if (!resp.ok) return;
-          var data = await resp.json();
-          var v = Number(data && data.ratePercent);
-          if (Number.isFinite(v)) applyRate(v);
-        } catch (e) { /* no-op */ }
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', refreshRate);
-      } else { refreshRate(); }
-    })();
-  </script>
 </body>
 </html>
