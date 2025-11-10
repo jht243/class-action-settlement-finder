@@ -111,19 +111,19 @@ async function handleRate(req: IncomingMessage, res: ServerResponse) {
   }
 
   const result = await fetchFredLatestRate();
-  let payload: any;
-  if (result) {
-    const rounded = Math.round(result.adjusted * 10) / 10;
-    payload = {
-      ratePercent: rounded,
-      rawPercent: result.raw,
-      adjustedAdded: 0.5,
-      observationDate: result.observationDate,
-      source: result.source,
-    };
-  } else {
-    payload = { ratePercent: 5.5, rawPercent: null, adjustedAdded: 0.5, observationDate: null, source: "fallback" };
+  if (!result) {
+    res.setHeader("Cache-Control", "no-store");
+    res.writeHead(503).end(JSON.stringify({ error: "FRED unavailable" }));
+    return;
   }
+  const rounded = Math.round(result.adjusted * 10) / 10;
+  const payload: any = {
+    ratePercent: rounded,
+    rawPercent: result.raw,
+    adjustedAdded: 0.5,
+    observationDate: result.observationDate,
+    source: result.source,
+  };
   fredRateCache = { ts: now, payload };
   res.setHeader("Cache-Control", "public, max-age=3600");
   res.writeHead(200).end(JSON.stringify(payload));
@@ -1340,8 +1340,39 @@ const httpServer = createServer(
                            ext === ".html" ? "text/html" : "application/octet-stream";
         res.writeHead(200, { 
           "Content-Type": contentType,
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache"
         });
+
+        // If serving the main widget HTML, inject the current rate into the badge
+        if (ext === ".html" && path.basename(assetPath) === "mortgage-calculator.html") {
+          try {
+            let html = fs.readFileSync(assetPath, "utf8");
+            // Compute the current rate (prefer cache, otherwise fetch)
+            let displayRate: number | null = null;
+            if (fredRateCache && fredRateCache.payload && typeof fredRateCache.payload.ratePercent === "number") {
+              displayRate = fredRateCache.payload.ratePercent;
+            } else {
+              const latest = await fetchFredLatestRate();
+              if (latest) {
+                displayRate = Math.round((latest.adjusted) * 10) / 10;
+              }
+            }
+            // Only inject if we have a valid live rate. Otherwise leave blank.
+            if (displayRate != null && Number.isFinite(displayRate)) {
+              const rateText = `${displayRate}%`;
+              html = html.replace(
+                /(<span\s+class=\"rate-num\">)([^<]*?)(<\/span>)/,
+                (_m: any, p1: string, _p2: string, p3: string) => `${p1}${rateText}${p3}`
+              );
+            }
+            res.end(html);
+            return;
+          } catch (e) {
+            // Fallback to streaming the file unchanged if anything goes wrong
+          }
+        }
+
         fs.createReadStream(assetPath).pipe(res);
         return;
       }
